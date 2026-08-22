@@ -7,8 +7,7 @@
         "error": {
             "cannot_connect": "Failed to connect",
             "invalid_credentials": "Entered credentials are incorrect",
-            "invalid_email": "Entered email address is incorrect",
-            "invalid_password": "Entered password is incorrect",
+            "no_devices": "No Owlet devices found on this account",
             "unknown": "Unknown error occured"
         },
         "step": {

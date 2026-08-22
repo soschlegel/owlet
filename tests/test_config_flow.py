@@ -6,8 +6,6 @@ from unittest.mock import patch
 from pyowletapi.exceptions import (
     OwletCredentialsError,
     OwletDevicesError,
-    OwletEmailError,
-    OwletPasswordError,
 )
 
 from homeassistant import config_entries
@@ -53,42 +51,6 @@ async def test_form(hass: HomeAssistant) -> None:
             "refresh": "refresh_token",
         }
         assert result["options"] == {"scan_interval": POLLING_INTERVAL}
-
-
-async def test_flow_wrong_password(hass: HomeAssistant) -> None:
-    """Test incorrect login throwing error."""
-    with patch(
-        "homeassistant.components.owlet.config_flow.OwletAPI.authenticate",
-        side_effect=OwletPasswordError(),
-    ):
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": config_entries.SOURCE_USER},
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            user_input=CONF_INPUT,
-        )
-        assert result["type"] == FlowResultType.FORM
-        assert result["errors"] == {"password": "invalid_password"}
-
-
-async def test_flow_wrong_email(hass: HomeAssistant) -> None:
-    """Test incorrect login throwing error."""
-    with patch(
-        "homeassistant.components.owlet.config_flow.OwletAPI.authenticate",
-        side_effect=OwletEmailError(),
-    ):
-        result = await hass.config_entries.flow.async_init(
-            DOMAIN,
-            context={"source": config_entries.SOURCE_USER},
-        )
-        result = await hass.config_entries.flow.async_configure(
-            result["flow_id"],
-            user_input=CONF_INPUT,
-        )
-        assert result["type"] == FlowResultType.FORM
-        assert result["errors"] == {"username": "invalid_email"}
 
 
 async def test_flow_credentials_error(hass: HomeAssistant) -> None:
@@ -175,8 +137,8 @@ async def test_reauth_success(hass: HomeAssistant) -> None:
         await hass.config_entries.async_unload(entry.entry_id)
 
 
-async def test_reauth_invalid_password(hass: HomeAssistant) -> None:
-    """Test reauth with invalid password errir."""
+async def test_reauth_invalid_credentials(hass: HomeAssistant) -> None:
+    """Test reauth with invalid credentials error."""
     entry = await async_init_integration(hass, skip_setup=True)
 
     result = await hass.config_entries.flow.async_init(
@@ -185,7 +147,7 @@ async def test_reauth_invalid_password(hass: HomeAssistant) -> None:
 
     with patch(
         "homeassistant.components.owlet.config_flow.OwletAPI.authenticate",
-        side_effect=OwletPasswordError(),
+        side_effect=OwletCredentialsError(),
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"], user_input={CONF_PASSWORD: "sample"}
@@ -193,7 +155,7 @@ async def test_reauth_invalid_password(hass: HomeAssistant) -> None:
 
         assert result["type"] == FlowResultType.FORM
         assert result["step_id"] == "reauth_confirm"
-        assert result["errors"] == {"password": "invalid_password"}
+        assert result["errors"] == {"password": "invalid_credentials"}
 
 
 async def test_reauth_unknown_error(hass: HomeAssistant) -> None:

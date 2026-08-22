@@ -10,8 +10,6 @@ from pyowletapi.api import OwletAPI
 from pyowletapi.exceptions import (
     OwletCredentialsError,
     OwletDevicesError,
-    OwletEmailError,
-    OwletPasswordError,
 )
 import voluptuous as vol
 
@@ -70,10 +68,6 @@ class OwletConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
             except OwletDevicesError:
                 errors["base"] = "no_devices"
-            except OwletEmailError:
-                errors[CONF_USERNAME] = "invalid_email"
-            except OwletPasswordError:
-                errors[CONF_PASSWORD] = "invalid_password"
             except OwletCredentialsError:
                 errors["base"] = "invalid_credentials"
             except Exception:  # pylint: disable=broad-except
@@ -98,7 +92,7 @@ class OwletConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlowHandler:
         """Get the options flow for this handler."""
-        return OptionsFlowHandler(config_entry)
+        return OptionsFlowHandler()
 
     async def async_step_reauth(
         self, user_input: Mapping[str, Any]
@@ -136,8 +130,8 @@ class OwletConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
                     return self.async_abort(reason="reauth_successful")
 
-            except OwletPasswordError:
-                errors[CONF_PASSWORD] = "invalid_password"
+            except OwletCredentialsError:
+                errors[CONF_PASSWORD] = "invalid_credentials"
             except Exception:  # pylint: disable=broad-except
                 _LOGGER.exception("Error reauthenticating")
 
@@ -150,10 +144,6 @@ class OwletConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 class OptionsFlowHandler(config_entries.OptionsFlow):
     """Handle a options flow for owlet."""
-
-    def __init__(self, config_entry: ConfigEntry) -> None:
-        """Initialise options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self, user_input: dict[str, Any] | None = None
